@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Security Research: BadUSB Architecture | Part 02</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================================================================
+           PART 2: EXTENDED STYLING (TECHNICAL BLUEPRINTS)
+           ================================================================
+           Part 1 එකේ තිබුණ CSS වලට අමතරව, මෙහි අපි "Technical Specs" 
+           පෙන්වන්න අලුත් Table Styles සහ Chip Diagrams එකතු කරනවා.
+        */
+
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --accent-green: #00ff41;
+            --accent-red: #ff3333;
+            --accent-blue: #00d9ff;
+            --accent-purple: #b026ff;
+            --panel-bg: #111111;
+            --border-color: #333333;
+            --code-bg: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* HEADER */
+        header {
+            border-bottom: 2px solid var(--accent-purple);
+            padding: 40px 20px;
+            text-align: center;
+            background: radial-gradient(circle, rgba(20,20,20,1) 0%, rgba(0,0,0,1) 100%);
+        }
+
+        header h1 {
+            color: var(--accent-purple);
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 15px rgba(176, 38, 255, 0.4);
+        }
+
+        /* TECH SPECS TABLE */
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        .tech-table th, .tech-table td {
+            border: 1px solid #333;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .tech-table th {
+            background-color: rgba(176, 38, 255, 0.1);
+            color: var(--accent-purple);
+        }
+
+        .tech-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* CHIP DIAGRAM STYLE */
+        .chip-diagram {
+            border: 2px solid var(--accent-blue);
+            background-color: #050505;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-blue);
+            white-space: pre;
+            overflow-x: auto;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
+        }
+
+        h2 { color: var(--accent-purple); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 50px; }
+        
+        .en-text { color: #cccccc; margin-bottom: 15px; }
+        
+        .si-text {
+            color: #ffffff;
+            font-family: 'Iskoola Pota', sans-serif;
+            background-color: rgba(176, 38, 255, 0.05); /* Purple tint for Part 2 */
+            padding: 20px;
+            border-left: 3px solid var(--accent-purple);
+            margin-bottom: 30px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* CODE SNIPPET HIGHLIGHT */
+        .code-snippet {
+            background: #111;
+            border-left: 4px solid var(--accent-green);
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #aaa;
+            margin: 20px 0;
+        }
+        .keyword { color: #ff79c6; }
+        .func { color: #8be9fd; }
+        .string { color: #f1fa8c; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>02. The Architecture of Deception</h1>
+        <p>ANALYZING THE HARDWARE & FIRMWARE LOGIC</p>
+    </header>
+
+    <div class="container">
+
+        <section>
+            <h2>03. The Brain: Understanding Microcontrollers</h2>
+            
+            <div class="en-text">
+                <p>A BadUSB device is not a standard flash drive. Inside a standard flash drive, there is a specialized controller dedicated to managing storage memory (NAND Flash). However, inside a BadUSB, there is a general-purpose <strong>Microcontroller Unit (MCU)</strong> capable of emulation.</p>
+                <p>The most common chips used in these attacks are the <strong>ATtiny85</strong> (found in Digispark) and the <strong>ATmega32U4</strong> (found in Arduino Pro Micro and USB Rubber Ducky).</p>
+            </div>
+
+            <div class="si-text">
+                <p><strong>03. මොළය: මයික්‍රොකන්ට්‍රෝලර් තාක්ෂණය</strong><br>
+                සාමාන්‍ය පෙන් ඩ්‍රයිව් එකක් ඇතුළේ තියෙන්නේ මෙමරි එක (Storage) පාලනය කරන චිප් එකක් විතරයි. ඒත් BadUSB එකක් ඇතුළේ ඊට වඩා බලගතු, අපිට ඕන විදිහට ප්‍රෝග්‍රෑම් කරන්න පුළුවන් "මයික්‍රොකන්ට්‍රෝලර්" (MCU) එකක් තියෙනවා. මේ චිප් එකට පුළුවන් කම්පියුටර් එකට බොරු කියන්න. බහුලවම පාවිච්චි වෙන්නේ <strong>ATtiny85</strong> (Digispark එකේ තියෙන චිප් එක) සහ <strong>ATmega32U4</strong> (Arduino Pro Micro එකේ තියෙන චිප් එක) යි.</p>
+            </div>
+
+            <div class="chip-diagram">
+      [ ATtiny85 PINOUT DIAGRAM ]
+      
+          +---v---+
+    PB5 --|1     8|-- VCC (5V)
+    PB3 --|2     7|-- PB2 (SCK)
+    PB4 --|3     6|-- PB1 (MISO) --> [USB DATA-]
+    GND --|4     5|-- PB0 (MOSI) --> [USB DATA+]
+          +-------+
+          
+    * This tiny 8-pin chip is enough to hack a PC.
+            </div>
+        </section>
+
+        <section>
+            <h2>04. The Mask: VID & PID Spoofing</h2>
+            
+            <div class="en-text">
+                <p>How does the computer know what device you plugged in? It checks the ID Card. Every USB device has two crucial numbers:</p>
+                <ul>
+                    <li><strong>VID (Vendor ID):</strong> Who made this device? (e.g., HP, Dell, Logiech).</li>
+                    <li><strong>PID (Product ID):</strong> What is this device? (e.g., Keyboard, Mouse, Webcam).</li>
+                </ul>
+                <p>BadUSB devices perform "Spoofing" by copying the VID/PID of a legitimate keyboard (e.g., a standard Dell Keyboard). The OS sees a trusted ID and loads the drivers immediately.</p>
+            </div>
+
+            <div class="si-text">
+                <p><strong>04. වෙස් මුහුණ: VID සහ PID වෙනස් කිරීම</strong><br>
+                කම්පියුටර් එක කොහොමද දැනගන්නේ ඔයා ගැහුවේ මවුස් එකක්ද නැත්නම් පෙන් එකක්ද කියලා? ඒක බලන්නේ අයිඩෙන්ටිටි කාඩ් එකෙන්. USB ඩිවයිස් එකක අංක දෙකක් තියෙනවා:
+                <br>1. <strong>VID (Vendor ID):</strong> නිෂ්පාදකයා කවුද? (උදා: Dell, HP).
+                <br>2. <strong>PID (Product ID):</strong> භාණ්ඩය මොකක්ද? (උදා: කීබෝඩ් එකක්).
+                <br><br>
+                BadUSB එක කරන්නේ මේ අංක දෙක හොරෙන් මාරු කරගන්න එකයි. එයා කම්පියුටර් එකට කියනවා "මම Dell සමාගමේ කීබෝඩ් එකක්" කියලා. එතකොට කම්පියුටර් එක කිසි සැකයක් නැතුව දොර අරිනවා.</p>
+            </div>
+
+            <table class="tech-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Real Pen Drive</th>
+                        <th>BadUSB (Spoofed)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Device Class</td>
+                        <td>Mass Storage</td>
+                        <td><strong>HID (Keyboard)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>VID Example</td>
+                        <td>0x0781 (SanDisk)</td>
+                        <td><strong>0x413C (Dell)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Driver Loaded</td>
+                        <td>USBSTOR.SYS</td>
+                        <td><strong>KBDHID.SYS</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Trust Level</td>
+                        <td>Low (Scanned by Antivirus)</td>
+                        <td><strong>High (Trusted Input)</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>05. The Code Injection Logic</h2>
+            
+            <div class="en-text">
+                <p>Once connected as a keyboard, the microcontroller executes the "Payload". Unlike a human who types at ~60 Words Per Minute (WPM), a BadUSB can inject keystrokes at <strong>1000+ WPM</strong>. This speed allows it to open a terminal, type a script, execute it, and close the window before the user blinks.</p>
+            </div>
+
+            <div class="si-text">
+                <p><strong>05. වේගය සහ ප්‍රහාරය</strong><br>
+                කීබෝඩ් එකක් විදිහට සම්බන්ධ වුණාට පස්සේ, මයික්‍රොකන්ට්‍රෝලර් එක එයාගේ මෙමරි එකේ තියෙන "Payload" එක රන් කරනවා. සාමාන්‍ය මනුස්සයෙක්ට විනාඩියකට වචන 60ක් විතර ටයිප් කරන්න පුළුවන් වුණාට, BadUSB එකකට විනාඩියකට වචන 1000කට වඩා ටයිප් කරන්න පුළුවන්. <br>
+                ඇහැ පිය ගහන වේගෙන් CMD (Terminal) එක ඕපන් කරලා, හැකින් කමාන්ඩ් එක ගහලා, CMD එක වහලා දාන්න මේකට පුළුවන්.</p>
+            </div>
+
+            <div class="code-snippet">
+                // SIMPLE ARDUINO HID LOGIC (CONCEPT)<br>
+                <span class="keyword">void</span> <span class="func">setup</span>() {<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.begin</span>(); // Spoofing starts here<br>
+                &nbsp;&nbsp;<span class="func">delay</span>(1000);<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.press</span>(KEY_LEFT_GUI); // Windows Key<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.press</span>('r');<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.releaseAll</span>();<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.print</span>(<span class="string">"cmd"</span>); // Opening Terminal<br>
+                &nbsp;&nbsp;<span class="func">Keyboard.press</span>(KEY_RETURN);<br>
+                }
+            </div>
+        </section>
+
+    </div>
+
+    <footer style="text-align: center; color: #555; padding: 20px;">
+        <p>DEV-KUPPIYA RESEARCH LABS | PART 02 OF 10 COMPLETED</p>
+        <p>Generating Part 03: The USB Killer Physics...</p>
+    </footer>
+
+</body>
+</html>
