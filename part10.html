@@ -10,16 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Orbitron:wght@500;900&family=Michroma&display=swap" rel="stylesheet">
 
     <style>
-        /* ==================================================================================
-           PART 10: THEME - BLUE TEAM DEFENSE CENTER (DEEP BLUE & HOLOGRAPHIC WHITE)
-           ==================================================================================
-           මෙම අවසාන කොටස සඳහා අපි "Cyber Security Operations Center (SOC)" එකක පෙනුම ලබා දෙමු.
-           ගැඹුරු නිල් (Deep Navy), ආරක්ෂිත සුදු (Secure White) සහ රන්වන් (Gold) වර්ණ 
-           භාවිතා කරමින් "අවසාන නිගමනය" සහ "සහතික කිරීම" නිරූපණය කරමු.
-           
-           CSS Line Count: Maximized for detail and animations.
-        */
-
+    
         :root {
             --bg-color: #000810;       /* Deepest Navy Blue */
             --defense-blue: #00aaff;   /* Shield Blue */
@@ -32,10 +23,6 @@
             --border-glow: 0 0 15px rgba(0, 170, 255, 0.3);
         }
 
-        /* ------------------------------------------------------------------
-           GLOBAL RESET & LAYOUT ENGINE
-           ------------------------------------------------------------------
-        */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -64,10 +51,6 @@
             z-index: 2;
         }
 
-        /* ------------------------------------------------------------------
-           ANIMATIONS & KEYFRAMES (FOR THE SEAL & UI)
-           ------------------------------------------------------------------
-        */
         @keyframes scan-sweep {
             0% { top: -10%; opacity: 0; }
             50% { opacity: 1; box-shadow: 0 0 50px var(--defense-blue); }
@@ -90,10 +73,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ------------------------------------------------------------------
-           HEADER SECTION: THE FINAL REPORT
-           ------------------------------------------------------------------
-        */
         header {
             height: 100vh;
             display: flex;
@@ -159,10 +138,6 @@
             60% {transform: translateY(-10px);}
         }
 
-        /* ------------------------------------------------------------------
-           SECTION STYLING: CARDS & GRIDS
-           ------------------------------------------------------------------
-        */
         section {
             padding: 100px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -224,10 +199,6 @@
             line-height: 2;
         }
 
-        /* ------------------------------------------------------------------
-           TECHNICAL ELEMENTS: CODE BLOCKS & REGISTRY
-           ------------------------------------------------------------------
-        */
         .tech-display {
             background: #050505;
             border: 1px solid #333;
@@ -256,10 +227,7 @@
         .registry-key { color: #ff79c6; }
         .registry-val { color: #f1fa8c; }
 
-        /* ------------------------------------------------------------------
-           DEFENSE STRATEGY CARDS
-           ------------------------------------------------------------------
-        */
+     
         .defense-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -295,10 +263,6 @@
             font-family: 'Orbitron', sans-serif;
         }
 
-        /* ------------------------------------------------------------------
-           THE FINAL SEAL: SH4LU_Z SIGNATURE
-           ------------------------------------------------------------------
-        */
         .final-seal-section {
             padding: 150px 0;
             text-align: center;
