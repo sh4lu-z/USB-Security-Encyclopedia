@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USB Security Research: USB Killer Physics | Part 03</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ================================================================
+           PART 3: HIGH VOLTAGE THEME (WARNING RED / ELECTRIC BLUE)
+           ================================================================
+           මෙම කොටසේදී අපි "Danger" හැඟීම දීමට රතු සහ විදුලි නිල් පාට
+           භාවිතා කරනවා. Pulse Animations මගින් Voltage Spikes පෙන්වනවා.
+        */
+
+        :root {
+            --bg-color: #050000; /* Darker Red-Black bg */
+            --text-color: #e0e0e0;
+            --danger-red: #ff0000;
+            --electric-blue: #00f3ff;
+            --voltage-yellow: #ffcc00;
+            --panel-bg: #110505;
+            --border-color: #330000;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* HEADER WITH PULSE ANIMATION */
+        header {
+            border-bottom: 3px solid var(--danger-red);
+            padding: 50px 20px;
+            text-align: center;
+            background: linear-gradient(0deg, rgba(20,0,0,1) 0%, rgba(0,0,0,1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header h1 {
+            color: var(--danger-red);
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            animation: glitch 2s infinite; /* Text Glitch Effect */
+        }
+
+        /* VOLTAGE WARNING BOX */
+        .danger-zone {
+            border: 2px dashed var(--danger-red);
+            background-color: rgba(255, 0, 0, 0.05);
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+            color: var(--danger-red);
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* CIRCUIT EXPLANATION CARDS */
+        .circuit-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--danger-red);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .circuit-card::before {
+            content: "⚡";
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--bg-color);
+            padding: 0 10px;
+            font-size: 1.5rem;
+        }
+
+        h2 { color: var(--electric-blue); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 40px; }
+
+        .en-text { color: #cccccc; margin-bottom: 15px; }
+
+        .si-text {
+            color: #ffffff;
+            font-family: 'Iskoola Pota', sans-serif;
+            background-color: rgba(255, 0, 0, 0.05);
+            padding: 20px;
+            border-left: 3px solid var(--danger-red);
+            margin-bottom: 30px;
+        }
+
+        /* DIAGRAM STYLES */
+        .diagram {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #000;
+            color: var(--voltage-yellow);
+            padding: 20px;
+            white-space: pre;
+            overflow-x: auto;
+            border: 1px solid var(--voltage-yellow);
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* KEYFRAMES FOR ANIMATIONS */
+        @keyframes glitch {
+            0% { text-shadow: 2px 2px var(--electric-blue); }
+            50% { text-shadow: -2px -2px var(--danger-red); }
+            100% { text-shadow: 2px 2px var(--electric-blue); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>03. The Physics of Destruction</h1>
+        <p>HIGH VOLTAGE MECHANICS & CIRCUIT TOPOLOGY</p>
+    </header>
+
+    <div class="container">
+
+        <div class="danger-zone">
+            WARNING: CONTAINS DETAILS ON HIGH VOLTAGE CIRCUITS (200V+).<br>
+            DO NOT ATTEMPT TO BUILD WITHOUT HIGH VOLTAGE SAFETY KNOWLEDGE.
+        </div>
+
+        <section class="circuit-card">
+            <h2>06. The Concept: Inverting DC-to-DC Converter</h2>
+            
+            <div class="en-text">
+                <p>The core mystery of the USB Killer is: <strong>"How does a device get 200V from a 5V USB port?"</strong> The answer lies in a component called an <strong>Inverting DC-to-DC Converter</strong>. It uses a transformer circuit to boost the low input voltage into a dangerously high output voltage.</p>
+                <p>Think of it like slowly filling a bucket with water (Charging) and then dumping it all at once (Discharging). The pressure of that sudden dump is massive.</p>
+            </div>
+
+            <div class="si-text">
+                <p><strong>06. සංකල්පය: වෝල්ටීයතාව වැඩි කිරීම</strong><br>
+                USB Killer එකේ තියෙන ලොකුම ප්‍රහේලිකාව තමයි, <strong>"කොහොමද මේක USB එකේ තියෙන පුංචි වෝල්ට් 5 අරගෙන වෝල්ට් 200ක් හදන්නේ?"</strong> කියන එක. මේකට පාවිච්චි කරන ටෙක්නික් එකට කියන්නේ <strong>Inverting DC-to-DC Converter</strong> කියලා. <br>
+                මේක හරියට වතුර බාල්දියක් හිමින් හිමින් පුරවලා (Charge), එකපාරටම හලනවා (Discharge) වගේ වැඩක්. කරාමයෙන් වතුර එන්නේ හිමින් වුණාට, බාල්දිය හලනකොට ලොකු පීඩනයක් එනවා. අන්න ඒ වගේ USB එකෙන් හිමින් කරන්ට් එක අරගෙන, ඒක එකපාරටම මැෂින් එකට විදිනවා.</p>
+            </div>
+        </section>
+
+        <section class="circuit-card">
+            <h2>07. The Weapon: Capacitors & Discharge</h2>
+            
+            <div class="en-text">
+                <p>The most visible components on a USB Killer are the <strong>Capacitors</strong>. These act as the "batteries" for the attack. The circuit follows a continuous loop:</p>
+                <ol>
+                    <li><strong>Harvest:</strong> Draws power from USB (5V) to charge capacitors.</li>
+                    <li><strong>Boost:</strong> Converts 5V to -220V internally.</li>
+                    <li><strong>Trigger:</strong> Once capacitors are full, a transistor opens the gate.</li>
+                    <li><strong>Attack:</strong> -220V is dumped onto the USB Data Lines (D+ / D-).</li>
+                    <li><strong>Repeat:</strong> The cycle repeats multiple times per second until the device is removed or the host is dead.</li>
+                </ol>
+            </div>
+
+            <div class="si-text">
+                <p><strong>07. ආයුධය: කැපෑසිටර් (Capacitors)</strong><br>
+                USB Killer එකක අපිට පේන්න තියෙන ලොකුම කෑලි තමයි කැපෑසිටර් කියන්නේ. මේවා තමයි මේ ප්‍රහාරයේ "උණ්ඩ" ගබඩා කරන තැන. මේකේ ක්‍රියාවලිය චක්‍රයක් වගේ දිගටම යනවා:
+                <br>1. <strong>එකතු කිරීම:</strong> USB එකෙන් වෝල්ට් 5ක් අරන් කැපෑසිටර් පුරවනවා.
+                <br>2. <strong>වැඩි කිරීම:</strong> ඒක ඇතුළෙදි වෝල්ට් -220 දක්වා වැඩි කරනවා.
+                <br>3. <strong>ප්‍රහාරය:</strong> කැපෑසිටර් පිරුණ ගමන්, ඒ අධික කරන්ට් එක USB ඩේටා ලයින් (Data Lines) හරහා ආපහු කම්පියුටර් එකට යවනවා.
+                <br>4. <strong>නැවත කිරීම:</strong> මැෂින් එක ඕෆ් වෙනකම්ම තත්පරේට කීප සැරයක් මේ වැඩේ වෙනවා.</p>
+            </div>
+
+            <div class="diagram">
+     [ USB PORT (5V) ] --------> [ TRANSFORMER ]
+                                      |
+                                  (Boosts to 200V)
+                                      v
+                               [ CAPACITORS ] <---(Charge)--+
+                                      |                     |
+                                  (Full?)                   |
+                                      |                     |
+                                      v                     |
+     [ DATA LINES ] <------- [ DISCHARGE SWITCH ] --(Loop)--+
+          |
+    (Zap! ⚡)
+          v
+     [ CPU / SOUTHBRIDGE ] ---> [ 🔥 DEAD 🔥 ]
+            </div>
+        </section>
+
+        <section class="circuit-card">
+            <h2>08. The Aftermath: Why it Kills?</h2>
+            
+            <div class="en-text">
+                <p>Modern CPUs and Southbridges have small diodes called <strong>ESD Protection</strong> to handle static electricity. However, these are designed for tiny shocks, not a sustained 200V assault. When the USB Killer fires, the high voltage burns through the ESD diodes, travels straight into the PCH (Platform Controller Hub), and often fries the CPU itself. This is physical hardware damage that cannot be fixed by formatting.</p>
+            </div>
+
+            <div class="si-text">
+                <p><strong>08. ප්‍රතිඵලය: මැෂින් එක මැරෙන්නේ ඇයි?</strong><br>
+                අපේ ප්‍රොසෙසර් (CPU) සහ මදර්බෝඩ් චිප්ස් ඇතුළේ "ESD Protection" කියලා පුංචි ඩයෝඩ් වගයක් තියෙනවා. ඒවා තියෙන්නේ පොඩි කරන්ට් ෂොක් (Static) වලින් බේරෙන්න. ඒත් වෝල්ට් 200ක ෂොක් එකක් දරාගන්න ඒවට බැහැ. <br>
+                USB Killer එක ගැහුවම, ඒ කරන්ට් එක කෙළින්ම මදර්බෝඩ් එකේ ප්‍රධාන චිප් එකට (PCH) ගිහින් ඒක අඟුරු කරනවා. මේක හාඩ්වෙයාර් ඩැමේජ් එකක් නිසා ෆෝමැට් කරලා හදන්න බැහැ. අලුතින් මදර්බෝඩ් එකක්ම දාන්න වෙනවා.</p>
+            </div>
+        </section>
+
+    </div>
+
+    <footer style="text-align: center; color: #555; padding: 20px;">
+        <p>DEV-KUPPIYA RESEARCH LABS | PART 03 OF 10 COMPLETED</p>
+        <p>Generating Part 04: DIY Labs - Building a Safe Test Bench...</p>
+    </footer>
+
+</body>
+</html>
